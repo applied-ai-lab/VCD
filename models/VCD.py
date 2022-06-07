@@ -11,7 +11,7 @@ import jax.random as random
 from typing import Union
 
 
-class RVCD(BaseSequenceModel):
+class VCD(BaseSequenceModel):
     """ This is the VCD model class for the mixed-state experiment. See eq. 8 for details.
 
     Attributes:
@@ -52,7 +52,7 @@ class RVCD(BaseSequenceModel):
                 "params": None
             },  # Parameters are shared across environment for the observed mechanisms.
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.int_prior_net = nn.vmap(
             ParallelRNN,
             in_axes=(1, 1, 1),
@@ -61,21 +61,21 @@ class RVCD(BaseSequenceModel):
                 "params": 0
             },  # Parameters are not shared for the intervened mechanisms.
             split_rngs={"params": True},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.posterior_net = nn.vmap(
             MLP,
             in_axes=(1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.obs_net = nn.vmap(
             MLP,
             in_axes=(1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.obs_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.obs_dim, hidden_dim=self.hidden_dim)
 
         self.prior = lambda h, z, a, mask: self.prior_net(
             h, jnp.concatenate([z, a], axis=-1), mask
@@ -226,7 +226,7 @@ class RVCD(BaseSequenceModel):
         return jnp.sum(jax.nn.sigmoid(params["params"]["intervention_targets"]))
 
 
-class ImageRVCD(RVCD):
+class ImageVCD(VCD):
     """ This is the VCD model class for the image experiment. See eq. 8 for details.
 
     Attributes:
@@ -265,21 +265,21 @@ class ImageRVCD(RVCD):
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.int_prior_net = nn.vmap(
             ParallelRNN,
             in_axes=(1, 1, 1),
             out_axes=1,
             variable_axes={"params": 0},
             split_rngs={"params": True},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.posterior_net = nn.vmap(
             Encoder,
             in_axes=1,
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim)
+        )(latent_dim=self.latent_dim)
         self.obs_net = nn.vmap(
             Decoder,
             in_axes=1,

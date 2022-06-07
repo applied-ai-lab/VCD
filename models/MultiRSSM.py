@@ -44,7 +44,7 @@ class MultiRSSM(RSSM):
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.latent_dim, hidden_dim=self.hidden_dim)
 
         self.prior_net = nn.vmap(
             TransitionRNN,
@@ -52,14 +52,14 @@ class MultiRSSM(RSSM):
             out_axes=1,
             variable_axes={"params": 0},  # Note that the parameters are not shared.
             split_rngs={"params": True},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.obs_net = nn.vmap(
             MLP,
             in_axes=(1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.obs_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.obs_dim, hidden_dim=self.hidden_dim)
 
         self.prior = lambda h, z, a, mask: self.prior_net(
             h, jnp.concatenate([z, a], axis=-1), 1
@@ -107,14 +107,14 @@ class ImageMultiRSSM(MultiRSSM):
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim)
+        )(latent_dim=self.latent_dim)
         self.prior_net = nn.vmap(
             TransitionRNN,
             in_axes=(1, 1, None),
             out_axes=1,
             variable_axes={"params": 0},  # Note that the parameters are not shared.
             split_rngs={"params": True},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.obs_net = nn.vmap(
             Decoder,
             in_axes=1,

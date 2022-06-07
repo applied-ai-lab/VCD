@@ -44,21 +44,21 @@ class RSSM(BaseSequenceModel):
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.prior_net = nn.vmap(
             TransitionRNN,
             in_axes=(1, 1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.obs_net = nn.vmap(
             MLP,
             in_axes=(1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.obs_dim, hidden_dim=self.hidden_dim)
+        )(out_dim=self.obs_dim, hidden_dim=self.hidden_dim)
 
         self.prior = lambda h, z, a, mask: self.prior_net(
             h, jnp.concatenate([z, a], axis=-1), 1
@@ -125,8 +125,6 @@ class RSSM(BaseSequenceModel):
             "int_prior_logvar": 0,
             "action": a_0,
             "transition_mask": 0,
-            "policy_mask": 0,
-            "reward_mask": 0,
             "int_mask": 0,
             "rng": rng,
         }
@@ -177,21 +175,21 @@ class ImageRSSM(RSSM):
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=1, hidden_dim=self.hidden_dim)
+        )(out_dim=1, hidden_dim=self.hidden_dim)
         self.posterior_net = nn.vmap(
             Encoder,
             in_axes=1,
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim)
+        )(latent_dim=self.latent_dim)
         self.prior_net = nn.vmap(
             TransitionRNN,
             in_axes=(1, 1, None),
             out_axes=1,
             variable_axes={"params": None},
             split_rngs={"params": False},
-        )(latents=self.latent_dim, hidden_dim=self.hidden_dim)
+        )(latent_dim=self.latent_dim, hidden_dim=self.hidden_dim)
         self.obs_net = nn.vmap(
             Decoder,
             in_axes=1,

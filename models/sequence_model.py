@@ -329,7 +329,7 @@ class BaseSequenceModel(nn.Module):
         init_carry = self.get_init_carry(
             self.hidden_dim, self.latent_dim, self.action_dim, batched_obs, mask, rng
         )
-        params = self.init(rng, init_carry, batch[0][0], batch[1][0], batch[2][0])
+        params = self.init(rng, init_carry, batch[0][0], batch[1][0])
         tx = optax.adam(learning_rate=lr)
         return train_state.TrainState.create(apply_fn=self.apply, params=params, tx=tx)
 
