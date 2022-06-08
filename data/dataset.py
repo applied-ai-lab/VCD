@@ -7,10 +7,21 @@ class DataLoader:
     def __init__(
         self,
         dataset_fn: Callable[..., tuple[np.ndarray, np.ndarray]],
-        dataset_args: Union[tuple, dict],
+        dataset_args: dict,
         batch_size: int,
+        random_seed: int,
         post_process: Callable[[np.ndarray], np.ndarray] = lambda x: x,
     ) -> None:
+        """ This is a wrapper class for the datasets that enables loading data batches.
+
+        Args:
+            dataset_fn: A function that returns a dataset of observation action sequences.
+            dataset_args: The keyword arguments for dataset_fn.
+            batch_size: The batch size for loading.
+            random_seed: The random seed for generating the dataset.
+            post_process: A function to transform the observations, i.e. mixing matrix for mixed-state experiments.
+        """
+        np.random.seed(random_seed)
         self.obs, self.action = dataset_fn(**dataset_args)
         self.batch_size = batch_size
         self.post_process = post_process
