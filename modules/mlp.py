@@ -5,7 +5,8 @@ import jax.numpy as jnp
 class MLP(nn.Module):
     """ This is a module for general conditional probabilities parameterised by MLP.
 
-    The conditional distributions are modelled as independent Gaussian distributions with learnt mean and variance.
+    The conditional distributions are modelled as independent Gaussian distributions
+    with learnt mean and variance.
 
     Attributes:
         out_dim (int): The dimension of the target.
@@ -27,7 +28,8 @@ class MLP(nn.Module):
 
         Returns:
             mu (DeviceArray): The predicted mean of the conditional distribution.
-            log_var (DevicdArray): The predicted log variance fo the conditional state distribution.
+            log_var (DevicdArray): The predicted log variance fo the conditional state
+            distribution.
         """
         log_var = self.param("log_var", nn.initializers.zeros, (self.out_dim,))
         x = nn.relu(nn.Dense(features=self.hidden_dim)(x))

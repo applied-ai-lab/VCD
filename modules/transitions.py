@@ -5,7 +5,8 @@ import jax.numpy as jnp
 class TransitionRNN(nn.Module):
     r""" This is the module dataclass for the fully-connected transition model.
 
-    The transition probability is split into a deterministic RNN and a fully connected MLP as follows.
+    The transition probability is split into a deterministic RNN and a fully connected
+    MLP as follows.
 
     .. math::
 
@@ -13,9 +14,9 @@ class TransitionRNN(nn.Module):
         h^t = f(h^{t-1}, z^{t-1}, a^{t-1}),
         z^t ~ \mathcal{N}(\mu(h^t), \sigma^2(h^t)),
         \end{array}
-    
-    where h is the hidden state of the RNN, f(.) is the RNN, mu and sigma are the mean and variance of the predicted distribution.
-    See eq. 3 in the paper.
+
+    where h is the hidden state of the RNN, f(.) is the RNN, mu and sigma are the mean
+    and variance of the predicted distribution. See eq. 3 in the paper.
 
     Attributes:
         latent_dim (int): the dimension of the latent space.
@@ -29,10 +30,11 @@ class TransitionRNN(nn.Module):
     def __call__(
         self, hidden: jnp.DeviceArray, x: jnp.DeviceArray, mask: jnp.DeviceArray
     ) -> tuple[jnp.DeviceArray, jnp.DeviceArray, jnp.DeviceArray]:
-        """ Computes the mean and log variance of the transition probability p(z^t | z^{t-1}, a^{t-1}).
+        """ Computes the mean and log variance of the transition probability
+        p(z^t | z^{t-1}, a^{t-1}).
 
         Args:
-            hidden: The previous hidden state of the RNN (h^{t-1}). 
+            hidden: The previous hidden state of the RNN (h^{t-1}).
             x: The concatentated input vector of latent state and action, [z, a].
             mask: Not used in this fully-connected case.
 
@@ -64,9 +66,9 @@ class ParallelRNN(nn.Module):
         h^t_i = f(h^{t-1}_i, M^{\mathcal{G}}_i \odot [z^{t-1}, a^{t-1}]),
         z^t_i ~ \mathcal{N}(\mu(h^t_i), \sigma^2(h^t_i)),
         \end{array}
-    
-    where h is the hidden state of the RNN, f(.) is the RNN, mu and sigma are the mean and variance of the predicted distribution.
-    See eq. 9 in the paper.
+
+    where h is the hidden state of the RNN, f(.) is the RNN, mu and sigma are the mean
+    and variance of the predicted distribution. See eq. 9 in the paper.
 
     Attributes:
         latent_dim (int): the dimension of the latent space.
@@ -80,12 +82,13 @@ class ParallelRNN(nn.Module):
     def __call__(
         self, hidden: jnp.DeviceArray, x: jnp.DeviceArray, mask: jnp.DeviceArray
     ) -> tuple[jnp.DeviceArray, jnp.DeviceArray, jnp.DeviceArray]:
-        """ Computes the mean and log variance of the transition probability p(z^t | z^{t-1}, a^{t-1}).
+        """ Computes the mean and log variance of the transition probability
+        p(z^t | z^{t-1}, a^{t-1}).
 
         Args:
             hidden: The previous hidden state of the RNN (h^{t-1}).
             x: The concatentated input vector of latent state and action, [z, a].
-            mask: The binary mask according to the causal graph. 
+            mask: The binary mask according to the causal graph.
 
         Returns:
             h: The hidden state of RNN at the current timestep (h^t).
@@ -94,10 +97,12 @@ class ParallelRNN(nn.Module):
         """
         # the log variance is a learnable parameter
         log_var = self.param("log_var", nn.initializers.zeros, (self.latent_dim,))
-        # Repeating the input vector along axis -1 in order to apply different masks for each latent dimension
+        # Repeating the input vector along axis -1 in order to apply different masks
+        # for each latent dimension
         x = jnp.repeat(jnp.expand_dims(x, -1), self.latent_dim, -1)
         x = x * mask
-        # Predictions in all dimensions are parallelised via vmap over axis -1, with no parameter sharing.
+        # Predictions in all dimensions are parallelised via vmap over axis -1, with
+        # no parameter sharing.
         h = nn.vmap(
             nn.GRUCell,
             in_axes=-1,

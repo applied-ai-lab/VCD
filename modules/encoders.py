@@ -1,6 +1,6 @@
 import flax.linen as nn
 
-# CNN encoder
+
 class Encoder(nn.Module):
     """ This is the module for CNN encoder.
 
@@ -13,10 +13,10 @@ class Encoder(nn.Module):
     @nn.compact
     def __call__(self, x):
         """ Returns the mean and variance of the latent variable.
-        
+
         Args:
             x (DeviceArray): the input image (assumed to be 128x128).
-        
+
         Returns:
             mu (DeviceArray): The mean of the encoding.
             log_var (DeviceArray): The log variance of the encoding.

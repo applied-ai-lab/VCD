@@ -8,10 +8,10 @@ class Decoder(nn.Module):
     @nn.compact
     def __call__(self, x: jnp.DeviceArray) -> jnp.DeviceArray:
         """ Returns the decoded image.
-        
+
         Args:
             x (DeviceArray): the input encoding.
-        
+
         Returns:
             The decoded image (3x128x128).
         """

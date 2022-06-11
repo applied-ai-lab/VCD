@@ -1,5 +1,4 @@
-from data.generate_data import get_states, get_images
-from typing import Union, Callable
+from typing import Callable
 import numpy as np
 
 
@@ -15,11 +14,13 @@ class DataLoader:
         """ This is a wrapper class for the datasets that enables loading data batches.
 
         Args:
-            dataset_fn: A function that returns a dataset of observation action sequences.
+            dataset_fn: A function that returns a dataset of observation action
+                sequences.
             dataset_args: The keyword arguments for dataset_fn.
             batch_size: The batch size for loading.
             random_seed: The random seed for generating the dataset.
-            post_process: A function to transform the observations, i.e. mixing matrix for mixed-state experiments.
+            post_process: A function to transform the observations, i.e. mixing
+                matrix for mixed-state experiments.
         """
         np.random.seed(random_seed)
         self.obs, self.action = dataset_fn(**dataset_args)

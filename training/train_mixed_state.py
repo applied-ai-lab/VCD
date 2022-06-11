@@ -9,12 +9,9 @@ from tqdm import tqdm
 import shutil
 import tensorboardX
 from flax import serialization
-from data.generate_data import get_states
-from data.dataset import DataLoader
-from models.RSSM import RSSM
-from models.MultiRSSM import MultiRSSM
-from models.VCD import VCD
-from training import train_step
+from data import dataset, generate_data
+from models import RSSM, MultiRSSM, VCD
+from training import train
 import jax
 import jax.random as random
 import jax.numpy as jnp
@@ -41,21 +38,29 @@ if args.verbose:
 mixing_matrix = random.normal(random.PRNGKey(0), (8, 12))
 mixing_function = lambda x: x @ mixing_matrix
 train_data_config = data_conf["train_data_conf"]
-train_data = DataLoader(
-    get_states, train_data_config, 100, data_conf["train_data_seed"], mixing_function
+train_data = dataset.DataLoader(
+    generate_data.get_states,
+    train_data_config,
+    100,
+    data_conf["train_data_seed"],
+    mixing_function,
 )
 val_data_config = data_conf["val_data_conf"]
-val_data = DataLoader(
-    get_states, val_data_config, 100, data_conf["val_data_seed"], mixing_function
+val_data = dataset.DataLoader(
+    generate_data.get_states,
+    val_data_config,
+    100,
+    data_conf["val_data_seed"],
+    mixing_function,
 )
 
 # ---------- setting up model ----------
 if model_conf["model"] == "RSSM":
-    m_class = RSSM
+    m_class = RSSM.RSSM
 elif model_conf["model"] == "MultiRSSM":
-    m_class = MultiRSSM
+    m_class = MultiRSSM.MultiRSSM
 elif model_conf["model"] == "VCD":
-    m_class = VCD
+    m_class = VCD.VCD
 else:
     raise NotImplementedError
 
@@ -95,12 +100,12 @@ iter_idx = 0
 
 # ---------- Training Loop ----------
 for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
-    state, rng = train_step(
+    state, rng = train.train_step(
         state, model, rng, train_data, val_data, lambdas, dimensions, writer, iter_idx
     )
     iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
-        if isinstance(model, VCD):
+        if isinstance(model, VCD.VCD):
             writer.add_image(
                 "causal_graph",
                 jnp.expand_dims(

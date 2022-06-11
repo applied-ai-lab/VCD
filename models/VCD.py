@@ -17,10 +17,12 @@ class VCD(BaseSequenceModel):
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space (needed in
+            the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one (for the
+            undisturbed environment).
     """
 
     latent_dim: int = 16
@@ -30,16 +32,20 @@ class VCD(BaseSequenceModel):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as RNNs for each individual dimension. The encoders and decoders are implemented as MLPs.
-        
-        The encoders and decoders are shared across all environments.
-        There are two transition models, one for the undisturbed transition mechanism and one for the intervened mechanisms.
-        Each environment has a seperate intervened transition mechanism whereas the undisturbed mechanism is shared across all environments.
+        """ The transition model is implemented as RNNs for each individual dimension.
+        The encoders and decoders are implemented as MLPs.
 
-        The VCD model also has a probilistic belief over graph structures and intervention targets.
+        The encoders and decoders are shared across all environments.
+        There are two transition models, one for the undisturbed transition mechanism
+        and one for the intervened mechanisms.
+        Each environment has a seperate intervened transition mechanism whereas the
+        undisturbed mechanism is shared across all environments.
+
+        The VCD model also has a probilistic belief over graph structures and
+        intervention targets.
         The probability of each edge {i,j} can be computed as exp(causal_graph[i,j]).
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation
@@ -114,17 +120,20 @@ class VCD(BaseSequenceModel):
         rng: jnp.DeviceArray,
     ) -> dict:
         """ Returns the initial carry dict.
-        
+
         Args:
             hidden_dim (int): The dimension of the hidden units in the RNN and MLP.
             latent_dim (int): The dimension of the latent space.
             action_dim (int): The dimension of the action space.
-            batch (DeviceArray): A batch of observations. (batch_size x n_envs x *observation dimensions)
-            params (FrozenDict): The parameter dict containing the causal graph mask and intervention target mask.
-            rng (DeviceArray): The rng key used for sampling graphs and intervention targets.
-        
+            batch (DeviceArray): A batch of observations.
+                The dimensions are (batch_size x n_envs x *observation dimensions)
+            params (FrozenDict): The parameter dict containing the causal graph mask
+                and intervention target mask.
+            rng (DeviceArray): The rng key used for sampling graphs and interventions.
+
         Returns:
-            A dictionary containing the relevant information carried from one timestep to the next, i.e.
+            A dictionary containing the relevant information carried to the next
+            timestep:
             {
                 "hidden": ...,
                 "prior_mu": ...,
@@ -142,7 +151,8 @@ class VCD(BaseSequenceModel):
         h_0 = jnp.zeros((batch.shape[0], batch.shape[1], hidden_dim, latent_dim))
         a_0 = jnp.zeros((batch.shape[0], batch.shape[1], action_dim))
 
-        # Draw samples of the intervention targets and causal graphs using the Gumbel-max trick.
+        # Draw samples of the intervention targets and causal graphs using the
+        # Gumbel-max trick.
         rng1, rng2 = random.split(rng)
         trans_mask = cls.gumbel_max_state(params["causal_graph"], batch, rng1)
         int_mask = cls.gumbel_max_intervention(
@@ -174,14 +184,16 @@ class VCD(BaseSequenceModel):
         log_prob: jnp.DeviceArray, input: jnp.DeviceArray, rng: jnp.DeviceArray
     ) -> jnp.DeviceArray:
         """ A function to draw samples of causal graphs using the Gumbel-max trick.
-        
+
         Args:
             log_prob (DeviceArray): The log probability of each edge.
-            input (DeviceArray): A batch of latent states. Used for determining the batch size.
+            input (DeviceArray): A batch of latent states. Used for determining
+                the batch size only.
             rng (DeviceArray): A random seed.
 
         Returns:
-            A DeviceArray with the sampled adjacency matrices, with the same batch size as input.
+            A DeviceArray with the sampled adjacency matrices, with the same
+            batch size as input.
         """
         shape = (input.shape[0], input.shape[1], log_prob.shape[0], log_prob.shape[1])
         logistic_samples = random.logistic(rng, shape)
@@ -197,14 +209,16 @@ class VCD(BaseSequenceModel):
         log_prob: jnp.DeviceArray, input: jnp.DeviceArray, rng: jnp.DeviceArray
     ) -> jnp.DeviceArray:
         """ A function to draw samples of intervention targets using the Gumbel-max trick.
-        
+
         Args:
             log_prob (DeviceArray): The log probability of each intervention target.
-            input (DeviceArray): A batch of latent states. Used for determining the batch size.
+            input (DeviceArray): A batch of latent states. Used for determining
+                the batch size only.
             rng (DeviceArray): A random seed.
 
         Returns:
-            A DeviceArray with the sampled binary intervention target matrix, with the same batch size as input.
+            A DeviceArray with the sampled binary intervention target matrix, with
+            the same batch size as input.
         """
         shape = (input.shape[0], log_prob.shape[0], log_prob.shape[1])
         logistic_samples = random.logistic(rng, shape)
@@ -232,10 +246,12 @@ class ImageVCD(VCD):
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+            (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+            (for the undisturbed environment).
     """
 
     latent_dim: int = 16
@@ -245,16 +261,20 @@ class ImageVCD(VCD):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as RNNs for each individual dimension. The encoders and decoders are implemented as Cnns.
-        
+        """ The transition model is implemented as RNNs for each individual dimension.
+        The encoders and decoders are implemented as Cnns.
+
         The encoders and decoders are shared across all environments.
-        There are two transition models, one for the undisturbed transition mechanism and one for the intervened mechanisms.
-        Each environment has a seperate intervened transition mechanism whereas the undisturbed mechanism is shared across all environments.
+        There are two transition models, one for the undisturbed transition mechanism
+        and one for the intervened mechanisms.
+        Each environment has a seperate intervened transition mechanism whereas
+        the undisturbed mechanism is shared across all environments.
 
-        The VCD model also has a probilistic belief over graph structures and intervention targets.
-        The probability of each edge {i,j} can be computed as exp(causal_graph[i,j]).
+        The VCD model also has a probilistic belief over graph structures and
+        intervention targets. The probability of each edge {i,j} can be computed
+        as exp(causal_graph[i,j]).
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation

@@ -10,15 +10,18 @@ import jax.numpy as jnp
 class MultiRSSM(RSSM):
     """ This is the MultiRSSM model class for the mixed-state experiment.
 
-    Same as RSSM except the transition model parameters are not shared across environments.
+    Same as RSSM except the transition model parameters are not shared across
+    environments.
 
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+            (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+            (for the undisturbed environment).
     """
 
     latent_dim: int = 24
@@ -28,12 +31,13 @@ class MultiRSSM(RSSM):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as an RNN. The encoders and decoders are implemented as MLPs.
-        
-        The encoders and decoders are shared across all environments 
+        """ The transition model is implemented as an RNN. The encoders and decoders
+        are implemented as MLPs.
+
+        The encoders and decoders are shared across all environments
         but seperate transition models are used for each individual environment.
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation
@@ -73,15 +77,18 @@ class MultiRSSM(RSSM):
 class ImageMultiRSSM(MultiRSSM):
     """ This is the MultiRSSM model class for the image experiment.
 
-    Same as RSSM except the transition model parameters are not shared across environments.
+    Same as RSSM except the transition model parameters are not shared across
+    environments.
 
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+        (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+        (for the undisturbed environment).
     """
 
     latent_dim: int = 24
@@ -91,12 +98,13 @@ class ImageMultiRSSM(MultiRSSM):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as an RNN. The encoders and decoders are implemented as CNNs.
-        
-        The encoders and decoders are shared across all environments 
-        but seperate transition models are used for each individual environment.
+        """ The transition model is implemented as an RNN. The encoders and decoders
+        are implemented as CNNs.
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        The encoders and decoders are shared across all environments but
+        seperate transition models are used for each individual environment.
+
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation

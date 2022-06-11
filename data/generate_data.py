@@ -8,22 +8,25 @@ def get_states(
     chunks: int = 20,
     interventions: list[list[int]] = [[]],
 ) -> tuple[np.ndarray, np.ndarray]:
-    """ Returns the state and action sequences. 
-    
-    The bodies are initialised with random positions and velocities. 
-    Each episode is rolled out for a specified number of steps and splited into a specified number of chunks.
-    For example, batch_size = 5, length=100, chunks=10 would return 50 episodes of length 10 steps.
-    
+    """ Returns the state and action sequences.
+
+    The bodies are initialised with random positions and velocities.
+    Each episode is rolled out for a specified number of steps and splited into a
+    specified number of chunks. For example, batch_size = 5, length=100, chunks=10
+    would return 50 episodes of length 10 steps.
+
     Args:
         batch_size (int): The number of episodes to rollout in parallel.
         length (int): The length of the rollouts.
         chunks (int): The number of chunks to split the episodes.
-        interventions(list[list[int]]): A list of lists specifying the interventions to apply. 
-            For example, [[1], [2,3]] returns sequences from two environments, one with intervention 1 applied, 
-            and the other with intervtnion 2 and 3 applied.
+        interventions(list[list[int]]): A list of lists specifying the interventions to
+            apply. For example, [[1], [2,3]] returns sequences from two environments,
+            one with intervention 1 applied, and the other with intervtnion 2 and 3
+            applied.
 
     Returns:
-        The state and action sequences. Each sequence is of the shape (length/chunks, batch_size*chunks, len(interventions), state/action_dim).
+        The state and action sequences. Each sequence is of the shape
+            (length/chunks, batch_size*chunks, len(interventions), state/action_dim).
 
     """
     state_data = []
@@ -79,22 +82,24 @@ def get_images(
     interventions: list[int] = [[]],
 ) -> tuple[np.ndarray, np.ndarray]:
     """ Generates an image dataset (Note that this is memory heavy).
-    
-    The bodies are initialised with random positions and velocities. 
-    Each episode is rolled out for a specified number of steps and splited into a specified number of chunks.
-    For example, batch_size = 5, length=100, chunks=10 would return 50 episodes of length 10 steps.
-    
+
+    The bodies are initialised with random positions and velocities.
+    Each episode is rolled out for a specified number of steps and splited into a
+    specified number of chunks. For example, batch_size = 5, length=100, chunks=10
+    would return 50 episodes of length 10 steps.
+
     Args:
         batch_size (int): The number of episodes to rollout in parallel.
         length (int): The length of the rollouts.
         chunks (int): The number of chunks to split the episodes.
-        steps (int): The sampling frequency, e.g. 5 means sampling every 5th state in the sequence. 
-        interventions(list[list[int]]): A list of lists specifying the interventions to apply. 
-            For example, [[1], [2,3]] returns sequences from two environments, one with intervention 1 applied, 
-            and the other with intervtnion 2 and 3 applied.
-    
+        interventions(list[list[int]]): A list of lists specifying the interventions to
+            apply. For example, [[1], [2,3]] returns sequences from two environments,
+            one with intervention 1 applied, and the other with intervtnion 2 and 3
+            applied.
+
     Returns:
-        The image and action sequences. Each sequence is of the shape (length/(chunks*steps), batch_size*chunks, len(interventions), image/action_dim).
+        The image and action sequences. Each sequence is of the shape
+        (length/(chunks*steps), batch_size*chunks, len(interventions), image/action_dim)
     """
     data = get_states(batch_size, length, chunks, interventions)
 

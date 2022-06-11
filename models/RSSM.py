@@ -7,7 +7,7 @@ from modules.mlp import MLP
 from modules.transitions import TransitionRNN
 from modules.encoders import Encoder
 from modules.decoders import Decoder
-from typing import Union, Tuple
+from typing import Union
 
 
 class RSSM(BaseSequenceModel):
@@ -16,10 +16,12 @@ class RSSM(BaseSequenceModel):
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+            (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+            (for the undisturbed environment).
     """
 
     latent_dim: int = 24
@@ -29,11 +31,12 @@ class RSSM(BaseSequenceModel):
     n_env: int = 6
 
     def setup(self) -> None:
-        """ The transition model is implemented as an RNN. The encoders and decoders are implemented as MLPs.
-        
+        """ The transition model is implemented as an RNN. The encoders and decoders
+        are implemented as MLPs.
+
         All models are vmap'ed over the interventions dimension with shared parameters.
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation
@@ -79,17 +82,21 @@ class RSSM(BaseSequenceModel):
         rng: jnp.DeviceArray,
     ) -> dict:
         """ Returns the initial carry dict.
-        
+
         Args:
             hidden_dim (int): The dimension of the hidden units in the RNN and MLP.
             latent_dim (int): The dimension of the latent space.
             action_dim (int): The dimension of the action space.
-            batch (DeviceArray): A batch of observations. (batch_size x n_envs x *observation dimensions)
-            params (FrozenDict): The parameter dict containing the causal graph mask and intervention target mask.
-            rng (DeviceArray): The rng key used for sampling graphs and intervention targets.
-        
+            batch (DeviceArray): A batch of observations.
+                (batch_size x n_envs x *observation dimensions)
+            params (FrozenDict): The parameter dict containing the causal graph mask
+                and intervention target mask.
+            rng (DeviceArray): The rng key used for sampling graphs and intervention
+                targets.
+
         Returns:
-            A dictionary containing the relevant information carried from one timestep to the next, i.e.
+            A dictionary containing the relevant information carried from one timestep
+            to the next, i.e.
             {
                 "hidden": ...,
                 "prior_mu": ...,
@@ -147,10 +154,12 @@ class ImageRSSM(RSSM):
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+            (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+            (for the undisturbed environment).
     """
 
     latent_dim: int = 24
@@ -160,11 +169,12 @@ class ImageRSSM(RSSM):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as an RNN. The encoders and decoders are implemented as CNN/ deconvolution network.
-        
+        """ The transition model is implemented as an RNN. The encoders and decoders
+        are implemented as CNN/ deconvolution network.
+
         All models are vmap'ed over the interventions dimension with shared parameters.
 
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
         int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation

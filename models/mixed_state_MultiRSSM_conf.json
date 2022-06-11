@@ -1,6 +1,6 @@
 {
     "model": "MultiRSSM",
-    "hidden_dim": 64,
+    "hidden_dim": 300,
     "latent_dim": 16,
     "lambda_sparse": 0,
     "lambda_intervention": 0,

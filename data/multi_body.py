@@ -1,4 +1,3 @@
-from re import L
 import numpy as np
 from PIL import Image, ImageDraw
 from dataclasses import dataclass
@@ -17,11 +16,11 @@ class Body:
 
 def init_body(batch_size: int, mass: float = 1.0) -> Body:
     """ Returns an initialised body object.
-    
+
     Args:
         batch_size (int): The size of a batch.
         mass (float): The mass of the object.
-    
+
     Returns:
         A body object with normally distributed position and velocity.
     """
@@ -40,7 +39,7 @@ def step_body(state: Body, dt: float, restrict: Union[str, None] = None) -> Body
         dt (float): The size of the timestep.
         restrict (Union[str, None]): The dimension of movement to be restricted,
             e.g. 'x' means that the object does not move in the x direction.
-    
+
     Returns:
         The updated body object.
     """
@@ -92,7 +91,7 @@ def apply_action(state: Body, action: np.ndarray) -> Body:
 
 def spring_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
     """ Returns the forces between two ojects linked with spring.
-    
+
     Args:
         b1 (Body): The first body.
         b2 (Body): The second body.
@@ -107,7 +106,7 @@ def spring_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
 
 def gravitational_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
     """ Returns the forces between two objects linked gravitationally.
-    
+
     Args:
         b1 (Body): The first body.
         b2 (Body): The second body.
@@ -128,7 +127,7 @@ def gravitational_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.nd
 
 def pd_control(a: Body, goal: np.ndarray = np.array([2.0, 2.0])) -> np.ndarray:
     """ This is a controller that drives the agent to a specified goal.
-    
+
     Args:
         a (Body): The state of the agent Body.
         goal (np.ndarray): The goal coordinates.
@@ -152,13 +151,14 @@ def step_simulation(
 ) -> Tuple[(Body,) * 4]:
     """ Computes the forces between the obejcts and update the states.
 
-    Args: 
+    Args:
         b1 (Body): Body number 1.
         b2 (Body): Body number 2.
         b3 (Body): Body number 3.
         a (Body): The agent.
         action (np.ndarray): The action vector to be applied to the agent.
-        interventions (list[int]): A list containing the interventions applied to the environment. See table 1.
+        interventions (list[int]): A list containing the interventions applied to the
+            environment. See table 1.
         dt (float): The size of the timestep.
 
     Returns:
@@ -231,8 +231,8 @@ def run_simulation(
     interventions: list[int] = [],
 ):
     """ Perform a number of simulation steps.
-    
-    Args: 
+
+    Args:
         b1 (Body): Body number 1.
         b2 (Body): Body number 2.
         b3 (Body): Body number 3.
@@ -241,7 +241,8 @@ def run_simulation(
         step_fn (Callable): A function that performs a step in the simulation.
         dt (float): The size of the timestep.
         steps (int): The number of steps to take.
-        interventions (list[int]): A list containing the interventions applied to the environment. See table 1.
+        interventions (list[int]): A list containing the interventions applied to the
+        environment. See table 1.
 
     Returns:
         A tuple of the four bodies after the update steps.
@@ -255,12 +256,12 @@ def run_simulation(
 
 def render(state: np.ndarray, order: tuple[(int,) * 4]) -> Image:
     """ Renders the state.
-    
+
     Args:
         state (np.ndarray): The state vector (x1, y1, x2, y2, x3, y3, x_agent, y_agent).
-        order (tuple[int]): The order in which the objects are rendered, 
-            i.e. [1,2,3,4] means body1 will be occluded by all other objects if overlapped.
-    
+        order (tuple[int]): The order in which the objects are rendered,
+            i.e. [1,2,3,4] means body1 will be occluded by all other objects.
+
     Returns:
         The rendered image.
     """
@@ -274,7 +275,9 @@ def render(state: np.ndarray, order: tuple[(int,) * 4]) -> Image:
     size_2 = 20
     size_3 = 20
     size_a = 20
-    to_coor = lambda x: x / 3 * (103 / 2) + (103 / 2)
+
+    def to_coor(x):
+        return x / 3 * (103 / 2) + (103 / 2)
 
     for i in order:
         if i == 0:

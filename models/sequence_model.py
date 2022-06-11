@@ -18,12 +18,15 @@ def KL_div(
 
     Args:
         mu_q (DeviceArray): The mean vector of the distribution Q.
-        logvar_q (DeviceArray): A vector containing the log variance of Q for each dimension.
+        logvar_q (DeviceArray): A vector containing the log variance of Q for each
+            dimension.
         mu_p (DeviceArray): The mean vector of the distribution P.
-        logvar_p (DeviceArray): A vector containing the log variance of P for each dimension.
+        logvar_p (DeviceArray): A vector containing the log variance of P for each
+            dimension.
 
     Returns:
-        kl (DeviceArray): A vector where each entry is the KL divergence of the corresponding dimension.
+        kl (DeviceArray): A vector where each entry is the KL divergence of the
+            corresponding dimension.
     """
     kl = 0.5 * (
         logvar_p
@@ -36,21 +39,24 @@ def KL_div(
 
 class BaseSequenceModel(nn.Module):
     """ The base class for ELBO-based latent sequence models.
-    
+
     To be implemented:
         setup: A function to specify the encoders, decoders and the transition models.
-        sparsity: Returns the expected number of edges in the learnt causal graph (if applicable).
-        intervention_sparsity: Returns the expected number of intervention targets (if applicable).
-        get_init_carry: Returns the initial carry dict, containing the relevant hidden state, masks and prior probabilities.
+        sparsity: Returns the expected number of edges in the learnt causal graph.
+        intervention_sparsity: Returns the expected number of intervention targets.
+        get_init_carry: Returns the initial carry dict, containing the relevant hidden
+            state, masks and prior probabilities.
 
 
     Attributes:
         latent_dim {int}: The dimension of the latent space.
         action_dim {int}: The dimension of the action space.
-        hidden_dim {int}: The dimension of hidden units in the transition model 
+        hidden_dim {int}: The dimension of hidden units in the transition model
             (and observation model in the case of MLP observations).
-        obs_dim (Union[int, None]): The dimension of the observation space (needed in the Mixed-state case only).
-        n_env {int}: The number for intervened environments plus one (for the undisturbed environment).    
+        obs_dim (Union[int, None]): The dimension of the observation space
+            (needed in the Mixed-state case only).
+        n_env {int}: The number for intervened environments plus one
+            (for the undisturbed environment).
     """
 
     latent_dim: int
@@ -63,9 +69,8 @@ class BaseSequenceModel(nn.Module):
         """ To be implemented for specific world models.
 
         Requires the implementation of the following functions:
-        prior: The transition model. h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
-        int_prior: The transition model for intervened environments. Used in VCD only. 
-            h^{t-1}, z^{t-1}, a^{t-1}, mask -> h^t, mu_{z^t}, logvar_{z^t}
+        prior: The transition model. (h, z,a)^{t-1}, mask -> (h, mu_z, logvar_z)^t
+        int_prior: The transition model for intervened environments. Used in VCD only.
         posterior: observation -> mu_{z^t}, logvar_{z^t}
         obs_model: z^t -> observation
         """
@@ -88,14 +93,17 @@ class BaseSequenceModel(nn.Module):
         rng: jnp.DeviceArray, mean: jnp.DeviceArray, logvar: jnp.DeviceArray
     ) -> jnp.DeviceArray:
         """ Returns a sample from a Gaussian distribution using the reparameterization trick.
-        
+
         Args:
             rng (random.PRNGKey): The random key for the sample.
-            mean (DeviceArray): The mean of the Gaussian distribution from which the samples are drawn.
-            logvar (DeviceArray): The log variance of the Gaussian distribution from which the samples are drawn.
+            mean (DeviceArray): The mean of the Gaussian distribution from which the
+                samples are drawn.
+            logvar (DeviceArray): The log variance of the Gaussian distribution from
+                which the samples are drawn.
 
         Returns:
-            DeviceArray: The random samples. If batched, the returned samples have the same batch size as logvar.
+            DeviceArray: The random samples. If batched, the returned samples have the
+                same batch size as logvar.
         """
         std = jnp.exp(0.5 * logvar)
         eps = random.normal(rng, logvar.shape)
@@ -104,7 +112,7 @@ class BaseSequenceModel(nn.Module):
     @staticmethod
     def sparsity(params: flax.core.frozen_dict.FrozenDict) -> jnp.DeviceArray:
         """ Computes the expected number of causal edges in the learnt causal graph.
-        
+
         Args:
             params (FrozenDict): The parameter dict for the model.
 
@@ -118,7 +126,7 @@ class BaseSequenceModel(nn.Module):
         params: flax.core.frozen_dict.FrozenDict,
     ) -> jnp.DeviceArray:
         """ Computes the expected number of intervention targets.
-        
+
         Args:
             params (FrozenDict): The parameter dict for the model.
 
@@ -138,17 +146,21 @@ class BaseSequenceModel(nn.Module):
         rng: jnp.DeviceArray,
     ) -> dict:
         """ Returns the initial carry dict.
-        
+
         Args:
             hidden_dim (int): The dimension of the hidden units in the RNN and MLP.
             latent_dim (int): The dimension of the latent space.
             action_dim (int): The dimension of the action space.
-            batch (DeviceArray): A batch of observations. (batch_size x n_envs x *observation dimensions)
-            params (FrozenDict): The parameter dict containing the causal graph mask and intervention target mask.
-            rng (DeviceArray): The rng key used for sampling graphs and intervention targets.
-        
+            batch (DeviceArray): A batch of observations.
+                (batch_size x n_envs x *observation dimensions)
+            params (FrozenDict): The parameter dict containing the causal graph mask
+                and intervention target mask.
+            rng (DeviceArray): The rng key used for sampling graphs and intervention
+                targets.
+
         Returns:
-            A dictionary containing the relevant information carried from one timestep to the next, i.e.
+            A dictionary containing the relevant information carried from one timestep
+                to the next, i.e.
             {
                 "hidden": ...,
                 "prior_mu": ...,
@@ -178,19 +190,21 @@ class BaseSequenceModel(nn.Module):
         self, prev_step: dict, obs: jnp.DeviceArray, action: jnp.DeviceArray
     ) -> tuple[dict, Tuple[(jnp.DeviceArray,) * 3]]:
         """ Computes the reconstruction error and the KL divergence for the next timestep.
-        
+
         Args:
             prev_step (dict): A dict containing infromation from the previous timestep.
             obs (DeviceArray): The observation for the current timestep.
             action (DeviceArray): The observed action for the current timestep.
 
         Returns:
-            carry (dict): A dict containing the relevant information to be carried to the next timestep.
+            carry (dict): A dict containing the relevant information to be carried to
+                the next timestep.
             tuple:
                 recon (DeviceArray): The reconstructed observation.
-                kl (DeviceArray): The KL divergence between the prior and posterior for each dimension (not summed).
-                latent_error (DeviceArray): The squared error between the mean of the prediction and 
-                    the posterior (for logging purpose only).
+                kl (DeviceArray): The KL divergence between the prior and posterior for
+                    each dimension (not summed).
+                latent_error (DeviceArray): The squared error between the mean of the
+                    prediction and the posterior (for logging purpose only).
         """
         rng = prev_step["rng"]
         t_mask = prev_step["transition_mask"]
@@ -204,12 +218,14 @@ class BaseSequenceModel(nn.Module):
         mean_q, logvar_q = self.posterior(obs)
         z = self.reparameterize(rng, mean_q, logvar_q)
 
-        # Compute the reconstruction and the KL divergence between the prior and the posterior
+        # Compute the reconstruction and the KL divergence between the prior and
+        # the posterior
         recon = self.obs_model(z)
         obs_kl = KL_div(mean_q, logvar_q, mean_p, logvar_p)
         int_kl = KL_div(mean_q, logvar_q, int_mean_p, int_logvar_p)
 
-        # the KL term can be computed by adding the masked kl from the interventional model and the undisturbed model. See eq. 24.
+        # the KL term can be computed by adding the masked kl from the interventional
+        # model and the undisturbed model. See eq. 24.
         kl = int_mask * int_kl + (1 - int_mask) * obs_kl
         latent_error = (
             int_mask * (int_mean_p - mean_q) ** 2
@@ -222,7 +238,8 @@ class BaseSequenceModel(nn.Module):
             prev_step["int_hidden"], z, action, t_mask
         )
 
-        # update the random key to ensure different reparameterisation samples for next timestep
+        # update the random key to ensure different reparameterisation samples for next
+        # timestep
         rng, key = random.split(rng)
         carry = {
             "hidden": h_t,
@@ -248,16 +265,20 @@ class BaseSequenceModel(nn.Module):
 
         If obs is available, the posterior distribution is used.
         If obs is none, the prior from the transition model is used instead.
-        In both cases, the returned reconstruction is from the predicted latents for evaluation purpose. 
-        When observation is available, this corresponds to one-step prediction in the observation space. 
-        
+        In both cases, the returned reconstruction is from the predicted latents for
+        evaluation purpose.
+        When observation is available, this corresponds to one-step prediction in the
+        observation space.
+
         Args:
             prev_step (dict): A dict containing infromation from the previous timestep.
-            obs (Union[None, DeviceArray]): The observation at current timestep. Set to None if not available.
+            obs (Union[None, DeviceArray]): The observation at current timestep. Set to
+                None if not available.
             action (DeviceArray): The action for the current timestep.
 
         Returns:
-            carry (dict): A dict containing the relevant information to be carried to the next timestep.
+            carry (dict): A dict containing the relevant information to be carried to
+                the next timestep.
             tuple:
                 recon (DeviceArray): The predicted reconstruction of the observation.
                 latent_error (DeviceArray): The squared error in the latent space.
@@ -270,7 +291,7 @@ class BaseSequenceModel(nn.Module):
 
         # Reconstruct using prior distribution from the transition model.
         mean_prior = int_mask * int_mean_p + (1 - int_mask) * mean_p
-        recon = self.obs_model(z)
+        recon = self.obs_model(mean_prior)
         if obs is not None:
             # Use the posterior if observation is available.
             mean_q, _ = self.posterior(obs)
@@ -281,7 +302,8 @@ class BaseSequenceModel(nn.Module):
             latent_error = None
             z = mean_prior
 
-        # Predict the next timestep based on the estimated latent for the current timestep.
+        # Predict the next timestep based on the estimated latent for the current
+        # timestep.
         h_t, next_mu, next_logvar = self.prior(prev_step["hidden"], z, action, t_mask)
         int_h_t, int_next_mu, int_next_logvar = self.int_prior(
             prev_step["int_hidden"], z, action, t_mask
@@ -296,7 +318,8 @@ class BaseSequenceModel(nn.Module):
             "int_prior_mu": int_next_mu,
             "int_prior_logvar": int_next_logvar,
             "action": action,
-            "transition_mask": t_mask,  # Note that the masks are not re-sampled within a trajectory.
+            # Note that the masks are not re-sampled within a trajectory.
+            "transition_mask": t_mask,
             "int_mask": int_mask,
             "rng": rng,
         }
@@ -312,10 +335,11 @@ class BaseSequenceModel(nn.Module):
 
         Args:
             rng (DeviceArray): A random key to initialise parameters.
-            batch (Tuple[DeviceArray, DeviceArray]): A batch of (observation, action) sequence. 
-                The sizes are (timesteps x batch x interventions x *observation_dim/ *action_dim)
+            batch (Tuple[DeviceArray, DeviceArray]): A batch of (observation, action)
+                sequence. The sizes are
+                (timesteps x batch x interventions x *observation_dim/ *action_dim)
             lr (float): The learning rate.
-    
+
         Return:
             The initial TrainState.
         """
@@ -345,12 +369,15 @@ class BaseSequenceModel(nn.Module):
 
         Args:
             rng (DeviceArray): A random key to initialise parameters.
-            batch (Tuple[DeviceArray, DeviceArray]): A batch of (observation, action) sequence. 
-                The sizes are (timesteps x batch x interventions x *observation_dim/ *action_dim)
-            pretrained_encoder (dict): A dict containing the pretrained parameters for the encoder.
-            pretrained_decoder (dict): A dict containing the pretrained parameters for the decoder.
+            batch (Tuple[DeviceArray, DeviceArray]): A batch of (observation, action)
+                sequence. The sizes are
+                (timesteps x batch x interventions x *observation_dim/ *action_dim)
+            pretrained_encoder (dict): A dict containing the pretrained parameters for
+                the encoder.
+            pretrained_decoder (dict): A dict containing the pretrained parameters for
+                the decoder.
             lr (float): The learning rate.
-    
+
         Return:
             The initial TrainState.
         """
@@ -386,11 +413,12 @@ class BaseSequenceModel(nn.Module):
         dimensions: Tuple[(int,) * 3] = (64, 24, 2),
     ) -> Tuple[Tuple[(jnp.DeviceArray,) * 5], train_state.TrainState]:
         """ Perform a gradient step on the parameters of the model.
-        
+
         Args:
             state (TrainState): The train state of the model.
-            data (tuple[DeviceArray, DeviceArray]): The observation action sequence. 
-                The dimensions are [batch, timestep, env_id, observation_dim/ action_dim] 
+            data (tuple[DeviceArray, DeviceArray]): The observation action sequence.
+                The dimensions are
+                [batch, timestep, env_id, observation_dim/ action_dim]
             rng (DeviceArray): The initial random key.
             lambdas (Dict): A dict containing the hyperparameters.
                 {
@@ -398,12 +426,13 @@ class BaseSequenceModel(nn.Module):
                 lambdas['sparse'] (float)
                 lambdas['int'] (float)
                 }
-            dimensions (tuple[int, int, int]): The dimensions of the latent space, 
+            dimensions (tuple[int, int, int]): The dimensions of the latent space,
                 hidden units and the action space (latent_dim, hidden_dim, action_dim).
 
         Return:
-            loss (tuple): The individual terms of the loss value 
-                (reconstruction loss, KL, prediction error, sparsity loss, intervention sparsity loss).
+            loss (tuple): The individual terms of the loss value
+                (reconstruction loss, KL, prediction error, sparsity loss,
+                intervention sparsity loss).
             state (TrainState): The updated TrainState.
         """
 
@@ -444,11 +473,12 @@ class BaseSequenceModel(nn.Module):
         dimensions: Tuple[(int,) * 3] = (64, 24, 2),
     ) -> Tuple[Tuple[(jnp.DeviceArray,) * 5], train_state.TrainState]:
         """ Evaluate the loss given a batch of data and the parameters.
-        
+
         Args:
             state (TrainState): The train state of the model.
-            data (tuple[DeviceArray, DeviceArray]): The observation action sequence. 
-                The dimensions are [batch, timestep, env_id, observation_dim/ action_dim] 
+            data (tuple[DeviceArray, DeviceArray]): The observation action sequence.
+                The dimensions are
+                [batch, timestep, env_id, observation_dim/ action_dim]
             rng (DeviceArray): The initial random key.
             lambdas (Dict): A dict containing the hyperparameters.
                 {
@@ -456,12 +486,13 @@ class BaseSequenceModel(nn.Module):
                 lambdas['sparse'] (float)
                 lambdas['int'] (float)
                 }
-            dimensions (tuple[int, int, int]): The dimensions of the latent space, 
+            dimensions (tuple[int, int, int]): The dimensions of the latent space,
                 hidden units and the action space (latent_dim, hidden_dim, action_dim).
 
         Return:
-            loss (tuple): The individual terms of the loss value 
-                (reconstruction loss, KL, prediction error, sparsity loss, intervention sparsity loss).
+            loss (tuple): The individual terms of the loss value
+                (reconstruction loss, KL, prediction error, sparsity loss,
+                intervention sparsity loss).
         """
 
         def loss_fn(params):
