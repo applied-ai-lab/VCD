@@ -26,6 +26,7 @@ parser.add_argument(
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--run_name", type=str, default=None)
 parser.add_argument("--checkpoint_freq", type=int, default=100)
+parser.add_argument("--batch_size", type=int, default=100)
 parser.add_argument("--verbose", action="store_true")
 args = parser.parse_args()
 
@@ -41,7 +42,7 @@ train_data_config = data_conf["train_data_conf"]
 train_data = dataset.DataLoader(
     generate_data.get_states,
     train_data_config,
-    100,
+    args.batch_size,
     data_conf["train_data_seed"],
     mixing_function,
 )
@@ -49,7 +50,7 @@ val_data_config = data_conf["val_data_conf"]
 val_data = dataset.DataLoader(
     generate_data.get_states,
     val_data_config,
-    100,
+    args.batch_size,
     data_conf["val_data_seed"],
     mixing_function,
 )
@@ -90,7 +91,7 @@ else:
     run_name = args.run_name
 try:
     log_dir = os.path.join(os.environ["LOG_DIR"], run_name)
-except:
+except KeyError:
     log_dir = os.path.join("../runs/", run_name)
 
 writer = tensorboardX.SummaryWriter(log_dir)
@@ -125,4 +126,3 @@ for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
             os.path.join(log_dir, f"model_checkpoint_{iter_idx}"),
             {"state_dict": serialization.to_state_dict(state), "iter_idx": iter_idx},
         )
-
