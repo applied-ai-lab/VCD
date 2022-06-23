@@ -43,13 +43,12 @@ class TransitionRNN(nn.Module):
             mu: The predicted mean of the latent state distribution.
             log_var: The predicted log variance fo the latent state distribution.
         """
-        # the log variance is a learnable parameter
         log_var = self.param("log_var", nn.initializers.zeros, (self.latent_dim,))
         h = nn.GRUCell()(hidden, x)[0]
-        h = nn.relu(nn.Dense(features=self.hidden_dim)(h))
-        h = nn.relu(nn.Dense(features=self.hidden_dim)(h))
-        mu = nn.Dense(features=self.latent_dim)(h)
-        # clipping log variance to -3
+        s = nn.relu(nn.Dense(features=self.hidden_dim)(h))
+        s = nn.relu(nn.Dense(features=self.hidden_dim)(s))
+        mu = nn.Dense(features=self.latent_dim)(s)
+        # log_var = nn.Dense(features=self.latents)(s)
         log_var = jnp.maximum(log_var, -3.0)
         return h, mu, jnp.broadcast_to(log_var, (x.shape[0], log_var.shape[0]))
 
@@ -110,29 +109,29 @@ class ParallelRNN(nn.Module):
             variable_axes={"params": 0},
             split_rngs={"params": True},
         )()(hidden, x)[0]
-        h = nn.vmap(
+        s = nn.vmap(
             nn.Dense,
             in_axes=-1,
             out_axes=-1,
             variable_axes={"params": 0},
             split_rngs={"params": True},
         )(features=self.hidden_dim)(h)
-        h = nn.relu(h)
-        h = nn.vmap(
+        s = nn.relu(s)
+        s = nn.vmap(
             nn.Dense,
             in_axes=-1,
             out_axes=-1,
             variable_axes={"params": 0},
             split_rngs={"params": True},
-        )(features=self.hidden_dim)(h)
-        h = nn.relu(h)
+        )(features=self.hidden_dim)(s)
+        s = nn.relu(s)
         mu = nn.vmap(
             nn.Dense,
             in_axes=-1,
             out_axes=-1,
             variable_axes={"params": 0},
             split_rngs={"params": True},
-        )(features=1)(h)
+        )(features=1)(s)
         # clipping log variance to -3
         log_var = jnp.maximum(log_var, -3.0)
         return (
