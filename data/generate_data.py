@@ -78,7 +78,7 @@ def get_images(
     batch_size: int,
     length: int = 1000,
     chunks: int = 20,
-    steps: int = 1,
+    steps: int = 5,
     interventions: list[int] = [[]],
 ) -> tuple[np.ndarray, np.ndarray]:
     """ Generates an image dataset (Note that this is memory heavy).
@@ -114,15 +114,24 @@ def get_images(
         ]
         for batch in data[0][subsample_id]
     ]
-    np_images = (
-        np.array(
-            [
-                np.array(
-                    [np.array(list(map(np.asarray, image))) for image in trajectory]
-                )
-                for trajectory in im_array
-            ]
-        )
-        / 255
+    np_images = np.array(
+        [
+            np.array([np.array(list(map(np.asarray, image))) for image in trajectory])
+            for trajectory in im_array
+        ]
     )
     return (np_images, data[1][subsample_id])
+
+
+def get_flattened_images(
+    batch_size: int,
+    length: int = 1000,
+    chunks: int = 20,
+    steps: int = 5,
+    interventions: list[int] = [[]],
+) -> tuple[np.ndarray, np.ndarray]:
+    data = get_images(batch_size, length, chunks, steps, interventions)
+    images = data[0].reshape(1, -1, 128, 128, 3)
+    actions = data[1].reshape(1, -1, 2)
+    p = np.random.permutation(images.shape[1])
+    return (images[:, p], actions[:, p])
