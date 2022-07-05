@@ -1,0 +1,9 @@
+{
+    "model": "RSSM",
+    "hidden_dim": 300,
+    "latent_dim": 16,
+    "lambda_sparse": 0,
+    "lambda_intervention": 0,
+    "lr": 0.0001,
+    "random_seed": 0
+}

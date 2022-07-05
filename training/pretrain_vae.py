@@ -14,14 +14,15 @@ from models import VAE
 from training import train
 import jax.random as random
 import jax.numpy as jnp
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_conf", type=str, default="../data/image_data_conf.json")
 parser.add_argument("--model_conf", type=str, default="../models/vae_conf.json")
-parser.add_argument("--epochs", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=150)
 parser.add_argument("--run_name", type=str, default=None)
-parser.add_argument("--checkpoint_freq", type=int, default=10)
-parser.add_argument("--batch_size", type=int, default=500)
+parser.add_argument("--checkpoint_freq", type=int, default=5)
+parser.add_argument("--batch_size", type=int, default=100)
 parser.add_argument("--verbose", action="store_true")
 args = parser.parse_args()
 
@@ -79,7 +80,10 @@ for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
     iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
         writer.add_image(
-            "reconstruction", visualised_recon, iter_idx,
+            "reconstruction",
+            np.array(visualised_recon),
+            iter_idx,
+            dataformats="HWC",
         )
         jnp.save(
             os.path.join(log_dir, f"model_checkpoint_{iter_idx}"),

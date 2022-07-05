@@ -24,6 +24,7 @@ parser.add_argument("--run_name", type=str, default=None)
 parser.add_argument("--checkpoint_freq", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=2)
 parser.add_argument("--verbose", action="store_true")
+parser.add_argument("--pretrain_path", type=str, default=None)
 args = parser.parse_args()
 
 data_conf = json.load(open(args.data_conf))
@@ -70,11 +71,17 @@ model = m_class(
     latent_dim=model_conf["latent_dim"],
     action_dim=2,
     hidden_dim=model_conf["hidden_dim"],
-    obs_dim=12,
+    obs_dim=None,
     n_env=len(data_conf["train_data_conf"]["interventions"]),
 )
 rng, key = random.split(random.PRNGKey(model_conf["random_seed"]))
-state = model.init_train_state(rng, train_data[0], lr=model_conf["lr"])
+if args.pretrain_path is None:
+    state = model.init_train_state(rng, train_data[0], lr=model_conf["lr"])
+else:
+    pretrained_vae = jnp.load(args.pretrain_path, allow_pickle=True).item()
+    enc = pretrained_vae['state_dict']['params']['params']['Encoder_0']
+    dec = pretrained_vae['state_dict']['params']['params']['Decoder_0']
+    state = model.load_train_state(rng, train_data[0], enc, dec, lr=model_conf["lr"])
 n_epochs = args.epochs
 
 # ---------- setting up logger ----------

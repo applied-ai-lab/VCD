@@ -1,0 +1,9 @@
+{
+    "model": "VCD",
+    "hidden_dim": 64,
+    "latent_dim": 16,
+    "lambda_sparse": 0,
+    "lambda_intervention": 0,
+    "lr": 0.0001,
+    "random_seed": 0
+}

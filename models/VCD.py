@@ -12,7 +12,7 @@ from typing import Union
 
 
 class VCD(BaseSequenceModel):
-    """ This is the VCD model class for the mixed-state experiment. See eq. 8 for details.
+    """This is the VCD model class for the mixed-state experiment. See eq. 8 for details.
 
     Attributes:
         latent_dim {int}: The dimension of the latent space.
@@ -32,7 +32,7 @@ class VCD(BaseSequenceModel):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as RNNs for each individual dimension.
+        """The transition model is implemented as RNNs for each individual dimension.
         The encoders and decoders are implemented as MLPs.
 
         The encoders and decoders are shared across all environments.
@@ -119,7 +119,7 @@ class VCD(BaseSequenceModel):
         params: Union[dict, flax.core.frozen_dict.FrozenDict],
         rng: jnp.DeviceArray,
     ) -> dict:
-        """ Returns the initial carry dict.
+        """Returns the initial carry dict.
 
         Args:
             hidden_dim (int): The dimension of the hidden units in the RNN and MLP.
@@ -183,7 +183,7 @@ class VCD(BaseSequenceModel):
     def gumbel_max_state(
         log_prob: jnp.DeviceArray, input: jnp.DeviceArray, rng: jnp.DeviceArray
     ) -> jnp.DeviceArray:
-        """ A function to draw samples of causal graphs using the Gumbel-max trick.
+        """A function to draw samples of causal graphs using the Gumbel-max trick.
 
         Args:
             log_prob (DeviceArray): The log probability of each edge.
@@ -208,7 +208,7 @@ class VCD(BaseSequenceModel):
     def gumbel_max_intervention(
         log_prob: jnp.DeviceArray, input: jnp.DeviceArray, rng: jnp.DeviceArray
     ) -> jnp.DeviceArray:
-        """ A function to draw samples of intervention targets using the Gumbel-max trick.
+        """A function to draw samples of intervention targets using the Gumbel-max trick.
 
         Args:
             log_prob (DeviceArray): The log probability of each intervention target.
@@ -231,17 +231,17 @@ class VCD(BaseSequenceModel):
 
     @staticmethod
     def sparsity(params):
-        """ Returns the expected number of edges in the causal graph."""
+        """Returns the expected number of edges in the causal graph."""
         return jnp.sum(jax.nn.sigmoid(params["params"]["causal_graph"]))
 
     @staticmethod
     def intervention_sparsity(params):
-        """ Returns the expected number of intervention targets"""
+        """Returns the expected number of intervention targets"""
         return jnp.sum(jax.nn.sigmoid(params["params"]["intervention_targets"]))
 
 
 class ImageVCD(VCD):
-    """ This is the VCD model class for the image experiment. See eq. 8 for details.
+    """This is the VCD model class for the image experiment. See eq. 8 for details.
 
     Attributes:
         latent_dim {int}: The dimension of the latent space.
@@ -261,7 +261,7 @@ class ImageVCD(VCD):
     n_env: int = 6
 
     def setup(self):
-        """ The transition model is implemented as RNNs for each individual dimension.
+        """The transition model is implemented as RNNs for each individual dimension.
         The encoders and decoders are implemented as Cnns.
 
         The encoders and decoders are shared across all environments.

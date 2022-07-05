@@ -383,18 +383,16 @@ class BaseSequenceModel(nn.Module):
         """
         batched_obs = batch[0][0]
         mask = {
-            "transition_mask": jnp.ones(
+            "causal_graph": jnp.ones(
                 (self.latent_dim + self.action_dim, self.latent_dim)
             ),
-            "policy_mask": jnp.ones((self.latent_dim, self.action_dim)),
-            "reward_mask": jnp.ones((self.latent_dim + self.action_dim, 1)),
-            "intervention_mask": jnp.ones((self.n_env, self.latent_dim)),
+            "intervention_targets": jnp.ones((self.n_env, self.latent_dim)),
         }
         init_carry = self.get_init_carry(
             self.hidden_dim, self.latent_dim, self.action_dim, batched_obs, mask, rng
         )
         params = flax.core.unfreeze(
-            self.init(rng, init_carry, batch[0][0], batch[1][0], batch[2][0])
+            self.init(rng, init_carry, batch[0][0], batch[1][0])
         )
         params["params"]["obs_net"] = pretrained_decoder
         params["params"]["posterior_net"] = pretrained_encoder

@@ -56,6 +56,11 @@ def pretrain_step(state, model, rng, train_data, val_data, writer, iter_idx):
     img_sample = val_data[0][0]
     recon = model.apply(state.params, val_data[0][0], val_rng)[2]
     visualised = jnp.concatenate(
-        [img_sample[0], jnp.ones((1, 128, 3)), recon[0]], axis=0
+        [
+            jnp.concatenate([img_sample[i], jnp.ones((1, 128, 3)), recon[i]], axis=0)
+            for i in range(4)
+        ],
+        axis=1,
     )
+
     return state, rng, visualised
