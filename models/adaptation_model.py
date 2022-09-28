@@ -26,7 +26,6 @@ class BaseAdapt(BaseSequenceModel):
         obs: jnp.DeviceArray,
         action: jnp.DeviceArray,
     ) -> tuple[dict, Tuple[(jnp.DeviceArray,) * 3]]:
-        # print('obs', obs.shape)
         rng = prev_step["rng"]
         t_mask = prev_step["transition_mask"]
         int_mask = prev_step["int_mask"]
@@ -44,10 +43,6 @@ class BaseAdapt(BaseSequenceModel):
         recon = self.trained_model.apply(
             trained_params, z, method=self.trained_model.decode
         )
-        # print('recon', recon.shape)
-        # mean_q = jnp.expand_dims(mean_q[:,0],axis=1)
-        # logvar_q = jnp.expand_dims(logvar_q[:,0],axis=1)
-        # print(mean_q.shape)
         # Compute the KL div between prior (predicted by the adaptation model) and
         # posterior
 
@@ -94,11 +89,6 @@ class BaseAdapt(BaseSequenceModel):
         }
         return carry, (recon, kl, latent_error)
 
-    # @classmethod
-    # def get_init_carry(
-    #     cls, trained_params, hidden_dim, latent_dim, action_dim, batch, params, rng
-    # ):
-    #     raise NotImplementedError
     @classmethod
     def get_init_carry(
         cls,

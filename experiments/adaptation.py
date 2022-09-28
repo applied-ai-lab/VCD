@@ -15,6 +15,7 @@ def adapt(
     checkpoint_id,
     mixing_matrix,
     epochs=5000,
+    observation_length=100
 ):
     model_conf = json.load(open(os.path.join(model_path, "model_conf.json")))
     model = model_class(
@@ -45,7 +46,7 @@ def adapt(
     lambdas = {
         "kl": 1,
         "sparse": 0,
-        "int": 0.01,
+        "int": 0.5,
     }
     dimensions = (model_conf["hidden_dim"], model_conf["latent_dim"], 2)
 
@@ -60,7 +61,8 @@ def adapt(
         loss, adapt_state = adapt_model.train(
             state.params, adapt_state, batch, rng, lambdas, dimensions
         )
-        tbar.set_description(f"kl: {loss[1].item():.4f}")
+        int_sparsity = adapt_model.intervention_sparsity(adapt_state.params)
+        tbar.set_description(f"kl: {loss[1]:.2f}, int: {int_sparsity:.2f}")
 
     carry = adapt_model.get_init_carry(
         state.params,
@@ -78,7 +80,7 @@ def adapt(
     for i in tqdm.tqdm(range(episode_length)):
         error = []
         batch = test_data[0]
-        if i <= 100:
+        if i <= observation_length:
             carry, out = adapt_model.apply(
                 adapt_state.params,
                 state.params,
