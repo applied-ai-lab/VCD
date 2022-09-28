@@ -25,7 +25,7 @@ parser.add_argument(
 )
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--run_name", type=str, default=None)
-parser.add_argument("--checkpoint_freq", type=int, default=100)
+parser.add_argument("--checkpoint_freq", type=int, default=5000)
 parser.add_argument("--batch_size", type=int, default=100)
 parser.add_argument("--verbose", action="store_true")
 args = parser.parse_args()
@@ -101,10 +101,9 @@ iter_idx = 0
 
 # ---------- Training Loop ----------
 for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
-    state, rng = train.train_step(
+    state, rng, iter_idx = train.train_step(
         state, model, rng, train_data, val_data, lambdas, dimensions, writer, iter_idx
     )
-    iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
         if isinstance(model, VCD.VCD):
             writer.add_image(

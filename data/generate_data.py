@@ -47,7 +47,7 @@ def get_states(
             b2 = init_body(batch_size)
 
         if 5 in inter:
-            b3 = init_body(batch_size, 2)
+            b3 = init_body(batch_size, 4)
         elif 8 in inter:
             b3 = init_body(batch_size, 0.5)
         else:

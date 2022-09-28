@@ -21,14 +21,20 @@ parser.add_argument("--data_conf", type=str, default="../data/image_data_conf.js
 parser.add_argument("--model_conf", type=str, default="../models/image_RSSM_conf.json")
 parser.add_argument("--epochs", type=int, default=500)
 parser.add_argument("--run_name", type=str, default=None)
-parser.add_argument("--checkpoint_freq", type=int, default=10)
+parser.add_argument("--checkpoint_freq", type=int, default=1000)
 parser.add_argument("--batch_size", type=int, default=2)
 parser.add_argument("--verbose", action="store_true")
-parser.add_argument("--pretrain_path", type=str, default=None)
+parser.add_argument("--pretrain_path", type=str, default="../pretrain/pretrain_vae.npy")
+parser.add_argument("--continue_from", type=str, default=None)
+parser.add_argument("--continue_checkpoint", type=int, default=0)
 args = parser.parse_args()
 
-data_conf = json.load(open(args.data_conf))
-model_conf = json.load(open(args.model_conf))
+if args.continue_from is not None:
+    data_conf = json.load(open(os.path.join(args.continue_from, "data_conf.json")))
+    model_conf = json.load(open(os.path.join(args.continue_from, "model_conf.json")))
+else:
+    data_conf = json.load(open(args.data_conf))
+    model_conf = json.load(open(args.model_conf))
 
 # ---------- setting up datasets ----------
 if args.verbose:
@@ -79,34 +85,48 @@ if args.pretrain_path is None:
     state = model.init_train_state(rng, train_data[0], lr=model_conf["lr"])
 else:
     pretrained_vae = jnp.load(args.pretrain_path, allow_pickle=True).item()
-    enc = pretrained_vae['state_dict']['params']['params']['Encoder_0']
-    dec = pretrained_vae['state_dict']['params']['params']['Decoder_0']
+    enc = pretrained_vae["state_dict"]["params"]["params"]["Encoder_0"]
+    dec = pretrained_vae["state_dict"]["params"]["params"]["Decoder_0"]
     state = model.load_train_state(rng, train_data[0], enc, dec, lr=model_conf["lr"])
-n_epochs = args.epochs
+
+if args.continue_from is not None:
+    state_dict = jnp.load(
+        os.path.join(
+            args.continue_from, f"model_checkpoint_{args.continue_checkpoint}.npy"
+        ),
+        allow_pickle=True,
+    ).item()["state_dict"]
+    state = serialization.from_state_dict(state, state_dict)
 
 # ---------- setting up logger ----------
-if args.run_name is None:
-    run_name = (
-        datetime.now().strftime("%h_%d__%H_%M_%S") + model.__class__.__name__ + "/"
-    )
+if args.continue_from is not None:
+    log_dir = args.continue_from
+    iter_idx = args.continue_checkpoint
+    writer = tensorboardX.SummaryWriter(log_dir)
 else:
-    run_name = args.run_name
-try:
-    log_dir = os.path.join(os.environ["LOG_DIR"], run_name)
-except KeyError:
-    log_dir = os.path.join("../runs/", run_name)
+    if args.run_name is None:
+        run_name = (
+            datetime.now().strftime("%h_%d__%H_%M_%S") + model.__class__.__name__ + "/"
+        )
+    else:
+        run_name = args.run_name
+    try:
+        log_dir = os.path.join(os.environ["LOG_DIR"], run_name)
+    except KeyError:
+        log_dir = os.path.join("../runs/", run_name)
+    writer = tensorboardX.SummaryWriter(log_dir)
+    shutil.copyfile(args.model_conf, os.path.join(log_dir, "model_conf.json"))
+    shutil.copyfile(args.data_conf, os.path.join(log_dir, "data_conf.json"))
+    iter_idx = 0
 
-writer = tensorboardX.SummaryWriter(log_dir)
-shutil.copyfile(args.model_conf, os.path.join(log_dir, "model_conf.json"))
-shutil.copyfile(args.data_conf, os.path.join(log_dir, "data_conf.json"))
-iter_idx = 0
+n_epochs = args.epochs
 
 # ---------- Training Loop ----------
 for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
-    state, rng = train.train_step(
+    state, rng, iter_idx = train.train_step(
         state, model, rng, train_data, val_data, lambdas, dimensions, writer, iter_idx
     )
-    iter_idx += 1
+    # iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
         if isinstance(model, VCD.VCD):
             writer.add_image(
