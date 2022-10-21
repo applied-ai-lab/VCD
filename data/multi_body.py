@@ -6,7 +6,7 @@ from typing import Union, Tuple, Callable
 
 @dataclass
 class Body:
-    """ This is a dataclass containing the states of an object."""
+    """This is a dataclass containing the states of an object."""
 
     position: np.ndarray
     velocity: np.ndarray
@@ -15,7 +15,7 @@ class Body:
 
 
 def init_body(batch_size: int, mass: float = 1.0) -> Body:
-    """ Returns an initialised body object.
+    """Returns an initialised body object.
 
     Args:
         batch_size (int): The size of a batch.
@@ -32,7 +32,7 @@ def init_body(batch_size: int, mass: float = 1.0) -> Body:
 
 
 def step_body(state: Body, dt: float, restrict: Union[str, None] = None) -> Body:
-    """ Updates the state of a body according to the velocity and acceleration.
+    """Updates the state of a body according to the velocity and acceleration.
 
     Args:
         state (Body): The body object to be updated.
@@ -77,20 +77,20 @@ def step_body(state: Body, dt: float, restrict: Union[str, None] = None) -> Body
 
 
 def apply_force(state: Body, force: np.ndarray) -> Body:
-    """ Updates the force on an object."""
+    """Updates the force on an object."""
     state.force = state.force + force
     return state
 
 
 def apply_action(state: Body, action: np.ndarray) -> Body:
-    """ Applies a thrust on an object."""
+    """Applies a thrust on an object."""
     # The action is soft-clipped at +- 3.
     thrust = 3.0 * np.tanh(action / 3)
     return apply_force(state, thrust)
 
 
 def spring_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
-    """ Returns the forces between two ojects linked with spring.
+    """Returns the forces between two ojects linked with spring.
 
     Args:
         b1 (Body): The first body.
@@ -105,7 +105,7 @@ def spring_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def gravitational_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.ndarray]:
-    """ Returns the forces between two objects linked gravitationally.
+    """Returns the forces between two objects linked gravitationally.
 
     Args:
         b1 (Body): The first body.
@@ -126,7 +126,7 @@ def gravitational_force(b1: Body, b2: Body, k: float) -> Tuple[np.ndarray, np.nd
 
 
 def pd_control(a: Body, goal: np.ndarray = np.array([2.0, 2.0])) -> np.ndarray:
-    """ This is a controller that drives the agent to a specified goal.
+    """This is a controller that drives the agent to a specified goal.
 
     Args:
         a (Body): The state of the agent Body.
@@ -149,7 +149,7 @@ def step_simulation(
     interventions: list[int] = [],
     dt: float = 0.001,
 ) -> Tuple[(Body,) * 4]:
-    """ Computes the forces between the obejcts and update the states.
+    """Computes the forces between the obejcts and update the states.
 
     Args:
         b1 (Body): Body number 1.
@@ -230,7 +230,7 @@ def run_simulation(
     steps: int = 20,
     interventions: list[int] = [],
 ):
-    """ Perform a number of simulation steps.
+    """Perform a number of simulation steps.
 
     Args:
         b1 (Body): Body number 1.
@@ -246,7 +246,7 @@ def run_simulation(
 
     Returns:
         A tuple of the four bodies after the update steps.
-        """
+    """
     for i in range(steps):
         b1, b2, b3, a = step_fn(
             b1, b2, b3, a, action, interventions=interventions, dt=dt
@@ -255,7 +255,7 @@ def run_simulation(
 
 
 def render(state: np.ndarray, order: tuple[(int,) * 4]) -> Image:
-    """ Renders the state.
+    """Renders the state.
 
     Args:
         state (np.ndarray): The state vector (x1, y1, x2, y2, x3, y3, x_agent, y_agent).
@@ -265,6 +265,7 @@ def render(state: np.ndarray, order: tuple[(int,) * 4]) -> Image:
     Returns:
         The rendered image.
     """
+    order = [0, 1, 2, 3]
     grid_size = 128
     im = Image.new("RGB", (grid_size, grid_size), (128, 128, 128))
     draw_ball1 = ImageDraw.Draw(im)

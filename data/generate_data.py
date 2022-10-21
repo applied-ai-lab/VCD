@@ -130,6 +130,25 @@ def get_flattened_images(
     steps: int = 5,
     interventions: list[int] = [[]],
 ) -> tuple[np.ndarray, np.ndarray]:
+    """ Generates an shuffled image dataset, i.e. no sequence structure.
+
+    This wraps around the get_images() function. This function flattens the observations
+    along the time dimension and shuffles the images. This is used for pretraining the
+    VAE.
+
+    Args:
+        batch_size (int): The number of episodes to rollout in parallel.
+        length (int): The length of the rollouts.
+        chunks (int): The number of chunks to split the episodes.
+        interventions(list[list[int]]): A list of lists specifying the interventions to
+            apply. For example, [[1], [2,3]] returns sequences from two environments,
+            one with intervention 1 applied, and the other with intervtnion 2 and 3
+            applied.
+
+    Returns:
+        The image and action samples. Each sequence is of the shape
+        (n_samples, *image_dim)
+    """
     data = get_images(batch_size, length, chunks, steps, interventions)
     images = data[0].reshape(1, -1, 128, 128, 3)
     actions = data[1].reshape(1, -1, 2)
