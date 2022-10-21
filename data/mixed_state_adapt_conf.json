@@ -1,0 +1,16 @@
+{
+    "train_data_conf": {
+        "batch_size": 2560,
+        "length": 50,
+        "chunks": 1,
+        "interventions": [[8]]
+    },
+    "train_data_seed": 0,
+    "test_data_conf": {
+        "batch_size": 200,
+        "length": 1000,
+        "chunks": 5,
+        "interventions": [[8]]
+    },
+    "test_data_seed": 2
+}

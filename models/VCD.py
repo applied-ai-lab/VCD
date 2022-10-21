@@ -153,7 +153,7 @@ class VCD(BaseSequenceModel):
 
         # Draw samples of the intervention targets and causal graphs using the
         # Gumbel-max trick.
-        rng1, rng2 = random.split(rng)
+        rng1, rng2, rng3, rng4 = random.split(rng, 4)
         trans_mask = cls.gumbel_max_state(params["causal_graph"], batch, rng1)
         int_mask = cls.gumbel_max_intervention(
             params["intervention_targets"], batch, rng2
@@ -164,7 +164,7 @@ class VCD(BaseSequenceModel):
             jnp.zeros((batch.shape[0], batch.shape[1], latent_dim)),
             jnp.zeros((batch.shape[0], batch.shape[1], latent_dim)),
         )
-        rng, key = random.split(rng2)
+        rng, key = random.split(rng4)
         carry = {
             "hidden": h_0,
             "prior_mu": mu,

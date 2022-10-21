@@ -48,8 +48,8 @@
     },
     "val_data_seed": 1,
     "test_data_conf": {
-        "batch_size": 200,
-        "length": 250,
+        "batch_size": 50,
+        "length": 500,
         "chunks": 1,
         "interventions": [
             [
