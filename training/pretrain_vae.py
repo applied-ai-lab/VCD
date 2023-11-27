@@ -7,7 +7,6 @@ from datetime import datetime
 import argparse
 from tqdm import tqdm
 import shutil
-import tensorboardX
 from flax import serialization
 from data import dataset, generate_data
 from models import VAE
@@ -15,6 +14,7 @@ from training import train
 import jax.random as random
 import jax.numpy as jnp
 import numpy as np
+import wandb
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_conf", type=str, default="../data/image_data_conf.json")
@@ -68,23 +68,19 @@ try:
 except KeyError:
     log_dir = os.path.join("../runs/", run_name)
 
-writer = tensorboardX.SummaryWriter(log_dir)
+# TODO: initialise wandb
+wandb.init(project=None, entity=None, name=run_name, dir=log_dir)
 shutil.copyfile(args.data_conf, os.path.join(log_dir, "data_conf.json"))
 iter_idx = 0
 
 # ---------- Training Loop ----------
 for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
     state, rng, visualised_recon = train.pretrain_step(
-        state, model, rng, train_data, val_data, writer, iter_idx
+        state, model, rng, train_data, val_data, iter_idx
     )
     iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
-        writer.add_image(
-            "reconstruction",
-            np.array(visualised_recon),
-            iter_idx,
-            dataformats="HWC",
-        )
+        wandb.log({"reconstruction": wandb.Image(visualised_recon)})
         jnp.save(
             os.path.join(log_dir, f"model_checkpoint_{iter_idx}"),
             {"state_dict": serialization.to_state_dict(state), "iter_idx": iter_idx},

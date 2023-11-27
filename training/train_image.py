@@ -7,7 +7,6 @@ from datetime import datetime
 import argparse
 from tqdm import tqdm
 import shutil
-import tensorboardX
 from flax import serialization
 from data import dataset, generate_data
 from models import RSSM, MultiRSSM, VCD
@@ -15,6 +14,8 @@ from training import train
 import jax
 import jax.random as random
 import jax.numpy as jnp
+import numpy as np
+import wandb
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_conf", type=str, default="../data/image_data_conf.json")
@@ -22,7 +23,7 @@ parser.add_argument("--model_conf", type=str, default="../models/image_RSSM_conf
 parser.add_argument("--epochs", type=int, default=500)
 parser.add_argument("--run_name", type=str, default=None)
 parser.add_argument("--checkpoint_freq", type=int, default=1000)
-parser.add_argument("--batch_size", type=int, default=2)
+parser.add_argument("--batch_size", type=int, default=4)
 parser.add_argument("--verbose", action="store_true")
 parser.add_argument("--pretrain_path", type=str, default="../pretrain/pretrain_vae.npy")
 parser.add_argument("--continue_from", type=str, default=None)
@@ -102,7 +103,6 @@ if args.continue_from is not None:
 if args.continue_from is not None:
     log_dir = args.continue_from
     iter_idx = args.continue_checkpoint
-    writer = tensorboardX.SummaryWriter(log_dir)
 else:
     if args.run_name is None:
         run_name = (
@@ -114,7 +114,13 @@ else:
         log_dir = os.path.join(os.environ["LOG_DIR"], run_name)
     except KeyError:
         log_dir = os.path.join("../runs/", run_name)
-    writer = tensorboardX.SummaryWriter(log_dir)
+    try:
+        os.makedirs(log_dir)
+    except FileExistsError:
+        # directory already exists
+        pass
+    # TODO: initialise wandb
+    wandb.init(project=None, entity=None, name=run_name, dir=log_dir)
     shutil.copyfile(args.model_conf, os.path.join(log_dir, "model_conf.json"))
     shutil.copyfile(args.data_conf, os.path.join(log_dir, "data_conf.json"))
     iter_idx = 0
@@ -124,27 +130,34 @@ n_epochs = args.epochs
 # ---------- Training Loop ----------
 for epoch in tqdm(range(n_epochs), disable=not (args.verbose)):
     state, rng, iter_idx = train.train_step(
-        state, model, rng, train_data, val_data, lambdas, dimensions, writer, iter_idx
+        state, model, rng, train_data, val_data, lambdas, dimensions, iter_idx
     )
     # iter_idx += 1
     if iter_idx % args.checkpoint_freq == 0:
         if isinstance(model, VCD.VCD):
-            writer.add_image(
-                "causal_graph",
-                jnp.expand_dims(
-                    jax.nn.sigmoid(state.params["params"]["causal_graph"]), 0
-                ),
-                iter_idx,
+            causal_graph = wandb.Image(
+                np.asarray(
+                    jnp.expand_dims(
+                        jax.nn.sigmoid(state.params["params"]["causal_graph"]), 0
+                    )
+                )
             )
-            writer.add_image(
-                "intervention_graph",
-                jnp.expand_dims(
-                    jax.nn.sigmoid(state.params["params"]["intervention_targets"]), 0
-                ),
-                iter_idx,
+            intervention_targets = wandb.Image(
+                np.asarray(
+                    jnp.expand_dims(
+                        jax.nn.sigmoid(state.params["params"]["intervention_targets"]), 0
+                    )
+                )
+            )
+            wandb.log(
+                {
+                    "graphs/causal_graph": causal_graph,
+                    "graphs/intervention_targets": intervention_targets,
+                }
             )
 
         jnp.save(
             os.path.join(log_dir, f"model_checkpoint_{iter_idx}"),
             {"state_dict": serialization.to_state_dict(state), "iter_idx": iter_idx},
         )
+wandb.finish()
